@@ -31,6 +31,7 @@ contract TheRewarderPool {
     // Track number of rounds
     uint256 public roundNumber;
 
+    // Custom errors
     error MustDepositTokens();
     error TransferFail();
 
@@ -47,16 +48,24 @@ contract TheRewarderPool {
      * @notice sender must have approved `amountToDeposit` liquidity tokens in advance
      */
     function deposit(uint256 amountToDeposit) external {
+        // if the amountToDeposit is equal to zero the transaction should revert
         if (amountToDeposit == 0) revert MustDepositTokens();
 
+        // mints receipts tokens to the msg.sender in the same quantity he deposited.
         accToken.mint(msg.sender, amountToDeposit);
+
+        // distributes rewards
         distributeRewards();
 
+        // transfers the DVT tokens from the msg.sender to this contract.
         if (!liquidityToken.transferFrom(msg.sender, address(this), amountToDeposit)) revert TransferFail();
     }
 
     function withdraw(uint256 amountToWithdraw) external {
+        // burns the amountToWithdraw of receipt tokens from the msg.sender
         accToken.burn(msg.sender, amountToWithdraw);
+
+        // transfers the DVT token to the msg.sender
         if (!liquidityToken.transfer(msg.sender, amountToWithdraw)) {
             revert TransferFail();
         }
@@ -65,11 +74,16 @@ contract TheRewarderPool {
     function distributeRewards() public returns (uint256) {
         uint256 rewards = 0;
 
+        // if it is a new rewards round (which happens every 5 days)
+        // then a new snapshot should be created.
         if (isNewRewardsRound()) {
             _recordSnapshot();
         }
 
+        // calculates the totalDeposits according to the totalSupply at the last snapshot.
         uint256 totalDeposits = accToken.totalSupplyAt(lastSnapshotIdForRewards);
+
+        // calculates the amount deposited by the msg.sender in the last snapshot.
         uint256 amountDeposited = accToken.balanceOfAt(msg.sender, lastSnapshotIdForRewards);
 
         if (amountDeposited > 0 && totalDeposits > 0) {

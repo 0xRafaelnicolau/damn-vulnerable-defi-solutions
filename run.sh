@@ -16,19 +16,19 @@ case $1 in
     ;;
 
   truster | 3 | trus)
-    forge test --match-contract Truster
+    forge test --match-contract Truster -vvv
     ;;
 
   side-entrance | 4 | side)
-    forge test --match-contract SideEntrance
+    forge test --match-contract SideEntrance -vvv
     ;;
 
   the-rewarder | 5 | rewa)
-    forge test --match-contract TheRewarder
+    forge test --match-contract TheRewarder -vvv
     ;;
 
   selfie | 6 | self)
-    forge test --match-contract Selfie
+    forge test --match-contract Selfie -vvv
     ;;
 
   compromised | 7 | comp)
