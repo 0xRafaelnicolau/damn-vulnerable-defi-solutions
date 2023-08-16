@@ -24,6 +24,7 @@ contract TrustfulOracle is AccessControlEnumerable {
     error ArraysWithDifferentSizes();
 
     modifier onlyTrustedSource() {
+        // checks if the msg.sender is a trusted source for the oracle
         if (!hasRole(TRUSTED_SOURCE_ROLE, msg.sender)) {
             revert NotATrustedSource();
         }
@@ -31,16 +32,21 @@ contract TrustfulOracle is AccessControlEnumerable {
     }
 
     modifier onlyInitializer() {
+        // checks if the msg.sender is the oracle initializer
         if (!hasRole(INITIALIZER_ROLE, msg.sender)) revert NotInitializer();
         _;
     }
 
     constructor(address[] memory sources, bool enableInitialization) {
+        // checks if the sources array is empty.
         if (sources.length == 0) revert EmptyArray();
+
+        // setups the roll for the 3 trusted source addresses.
         for (uint256 i = 0; i < sources.length; i++) {
             _setupRole(TRUSTED_SOURCE_ROLE, sources[i]);
         }
 
+        // setups the role for the oracle initializer.
         if (enableInitialization) {
             _setupRole(INITIALIZER_ROLE, msg.sender);
         }
@@ -66,6 +72,10 @@ contract TrustfulOracle is AccessControlEnumerable {
         _setPrice(msg.sender, symbol, newPrice);
     }
 
+    /**
+     * EXTERNAL FUNCTIONS THAT CAN BE CALLED BY ANY USER
+     */
+
     function getMedianPrice(string calldata symbol) external view returns (uint256) {
         return _computeMedianPrice(symbol);
     }
@@ -89,6 +99,10 @@ contract TrustfulOracle is AccessControlEnumerable {
     function getNumberOfSources() public view returns (uint256) {
         return getRoleMemberCount(TRUSTED_SOURCE_ROLE);
     }
+
+    /**
+     * PRIVATE FUNCTIONS
+     */
 
     function _setPrice(address source, string memory symbol, uint256 newPrice) private {
         uint256 oldPrice = pricesBySource[source][symbol];

